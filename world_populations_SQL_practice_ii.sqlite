@@ -1,0 +1,128 @@
+-- **Below are my solutions to the Codecademy World Populations SQL Practice II
+-- **Commented-out problem descriptions will precede solutions
+-- **Additional comments by me will use ** as an identifier for easier reading
+
+
+-- **Begin problem/solution set
+
+
+-- **Problems 1 and 2 are informational only and require no solution
+-- **The descriptions nonetheless listed below are retained in an attempt to provide additional clarity
+
+
+-- 1. In order to complete this project, you should have completed the Learn SQL Manipulation, Queries, Aggregate Functions, and Multiple Tables lessons in our Learn SQL course.
+
+
+-- 2. In this project, you’ll answer questions using a database of world population by country.
+-- There are two tables:
+
+-- countries
+-- id	INTEGER	Primary Key
+-- name	TEXT	
+-- continent	TEXT
+
+-- population_years
+-- id	INTEGER	Primary Key
+-- population	NUMBER	(in millions)
+-- year	NUMBER	
+-- country_id	INTEGER	Foreign Key
+
+-- Refer to this schema as you write queries to the database.
+
+-- When you finish this project, you should be able to answer each the questions that follow using a single SQL query.
+
+
+-- 3. How many entries in the countries table are from Africa?
+
+SELECT COUNT(*) AS 'Number of Countries in Africa'
+FROM countries
+WHERE continent = 'Africa';
+
+
+-- 4. What was the total population of the continent of Oceania in 2005?
+
+
+SELECT 
+  countries.continent AS 'Continent',
+  SUM(population_years.population) * 1000000 AS '2005 Total Population' 
+FROM countries
+JOIN population_years
+  ON population_years.country_id = countries.id
+WHERE population_years.year = 2005
+  AND countries.continent = 'Oceania';
+
+
+-- 5. What is the average population of countries in South America in 2003?
+
+WITH joined AS 
+(
+SELECT  *
+FROM countries
+JOIN population_years
+  ON countries.id = population_years.country_id
+)
+SELECT
+  continent AS 'Continent',
+  year AS 'Year',
+  ROUND(AVG(population), 1) AS 'Average Population 2003 in Millions'
+FROM joined
+WHERE year = 2003
+ AND continent = 'South America';
+
+
+-- 6. What country had the smallest population in 2007?
+
+WITH joined AS 
+(
+SELECT  *
+FROM countries
+JOIN population_years
+  ON countries.id = population_years.country_id
+)
+SELECT
+  joined.name AS 'Country',
+  MIN(joined.population) AS '2007 Lowest Population in Millions'
+FROM joined
+WHERE joined.year = 2007;
+
+
+-- 7. What is the average population of Poland during the time period covered by this dataset?
+
+WITH joined AS 
+(
+SELECT  *
+FROM countries
+JOIN population_years
+  ON countries.id = population_years.country_id
+)
+SELECT
+  joined.name AS 'Country',
+  ROUND(AVG(joined.population), 1) AS 'Average Population in Millions 2000-2010'
+FROM joined
+WHERE name = 'Poland';
+
+
+-- 8. How many countries have the word “The” in their name?
+
+SELECT COUNT(name) AS 'Country Names with "The"'
+FROM countries
+WHERE name LIKE '%The%';
+
+
+-- 9. What was the total population of each continent in 2010?
+
+WITH joined AS 
+(
+SELECT  *
+FROM countries
+JOIN population_years
+  ON countries.id = population_years.country_id
+)
+SELECT
+  continent AS 'Continent',
+  SUM(population) AS 'Total Population 2010'
+FROM joined
+WHERE year = 2010
+GROUP BY continent; 
+
+-- **Thanks!
