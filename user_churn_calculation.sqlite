@@ -1,0 +1,69 @@
+-- Below is a learning objective in Codecademy for a Multiple Month Churn Rate Calculation.
+-- The query progresses through a funnel of WITH statements to get a an aggregated result.
+-- This is submitted for my own future reference, if necessary.
+
+-- Start with defining the first and last day of the period.
+-- This can be modified easily and will be reflected in the final result.
+WITH months AS
+(
+SELECT
+  '2017-01-01' as first_day,
+  '2017-01-31' as last_day
+  -- Stacking additional month (Feb)
+UNION
+SELECT
+  '2017-02-01' as first_day,
+  '2017-02-28' as last_day
+  -- Stacking additional month (March)
+UNION
+SELECT
+  '2017-03-01' as first_day,
+  '2017-03-31' as last_day
+),
+-- The cross join works in this instance since we need to match the subscription dates to each month.
+cross_join AS
+(
+SELECT *
+FROM subscriptions
+CROSS JOIN months
+),
+-- This view shows the status of subscriptions using CASE statements to create a true/false (or 1/0) output for agrregation further down.
+status AS
+(
+SELECT id, first_day as month,
+  -- This CASE give a true/false result indicating current active status based on start date being prior  to the beginning of the period and the end date being NULL or after the end of the period.
+CASE
+  WHEN (subscription_start < first_day)
+    AND (subscription_end > first_day OR subscription_end IS NULL) 
+  THEN 1
+  ELSE 0
+END as is_active,
+  -- Similar to the above, this CASE will indicate a 0 if the there is an end date that falls between the covered period.
+CASE 
+  WHEN subscription_end BETWEEN first_day AND last_day 
+  THEN 1
+  ELSE 0
+END as is_canceled
+FROM cross_join
+),
+-- This final view is the aggregation of the subscription statuses.
+-- It provides the base result for a churn calculation (final SELECT statement below) as a simple summation of the 1/0 values to arrive at total active and total cancellations for each month.
+-- A GROUP BY is used at the end and is requisite due to the SUM aggregations.
+status_aggregate AS
+(
+SELECT
+  month,
+  SUM(is_active) as active,
+  SUM(is_canceled) as canceled
+FROM status
+GROUP BY month
+)
+-- Finally, we arrive at the intended calculaton.
+-- User Churn Rate = canceled / active
+-- Added the ROUND function, aliases and multiplied by 100 to make the result easier to read.
+SELECT 
+  status_aggregate.month AS 'Month',
+  (100.0 *ROUND((1.0 * status_aggregate.canceled / status_aggregate.active), 3)) AS 'Churn Rate %'
+FROM status_aggregate;
+
+-- Thanks!
